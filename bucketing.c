@@ -21,9 +21,7 @@ static wasmtime_context_t *wasm_context;
 static wasmtime_instance_t *wasm_instance;
 
 wasmtime_val_t getstringparam(char *envKey) {
-    wasmtime_val_t param;
-    param.kind = WASMTIME_I32;
-    param.of.i32 = new_asc_string(envKey, strlen(envKey));
+    wasmtime_val_t param = {.kind = WASMTIME_I32, .of.i32 =new_asc_string(envKey, strlen(envKey))};
     return param;
 }
 
@@ -61,7 +59,8 @@ void initialize() {
 
 
     // Create all the imported functions
-    wasm_functype_t *env_abort_t = wasm_functype_new_4_0(wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32());
+    wasm_functype_t *env_abort_t = wasm_functype_new_4_0(wasm_valtype_new_i32(), wasm_valtype_new_i32(),
+                                                         wasm_valtype_new_i32(), wasm_valtype_new_i32());
     wasmtime_func_t env_abort;
     wasmtime_func_new(wasm_context, env_abort_t, env__abort, NULL, NULL, &env_abort);
     wasm_functype_delete(env_abort_t);
@@ -262,7 +261,7 @@ static unsigned char *read_asc_string(int addr) {
 
     unsigned char *data = malloc(length);
     for (int i = 0; i < length; i += 2) {
-        data[i/2] = wasmtime_memory_data(wasm_context, &wasm_memory)[addr + i];
+        data[i / 2] = wasmtime_memory_data(wasm_context, &wasm_memory)[addr + i];
     }
     return data;
 }
@@ -295,7 +294,7 @@ env__abort(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, siz
     int line = args[2].of.i32;
     // column number
     int col = args[3].of.i32;
-    printf("%s : %s - %d:%d\n",message, filename, line, col );
+    printf("%s : %s - %d:%d\n", message, filename, line, col);
     exit(1);
     return NULL;
 }

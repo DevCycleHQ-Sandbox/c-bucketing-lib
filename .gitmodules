@@ -1,3 +1,6 @@
 [submodule "third_party/wasmtime"]
 	path = third_party/wasmtime
 	url = git@github.com:bytecodealliance/wasmtime.git
+[submodule "third_party/googletest"]
+	path = third_party/googletest
+	url = git@github.com:google/googletest.git
