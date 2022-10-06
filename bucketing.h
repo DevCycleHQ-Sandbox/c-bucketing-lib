@@ -8,6 +8,9 @@
 #include <wasmtime.h>
 #include <stdbool.h>
 
+
+#include "lib/bucketing-lib.release.wasm.h"
+
 void initialize();
 
 void cleanup();
@@ -31,8 +34,6 @@ void queue_aggregate_event(char *envKey, char *user, char *eventString);
 void store_config(char *token, char *config);
 
 void set_platform_data(char *platformData);
-
-void hello(void);
 
 static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_trap_t *trap);
 

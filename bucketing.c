@@ -1,5 +1,81 @@
 #include "bucketing.h"
 
+static wasmtime_extern_t *_init_event_queue;
+static wasmtime_extern_t *_flush_event_queue;
+static wasmtime_extern_t *_on_payload_success;
+static wasmtime_extern_t *_on_payload_failure;
+static wasmtime_extern_t *_generate_bucketed_config;
+static wasmtime_extern_t *_event_queue_size;
+static wasmtime_extern_t *_queue_event;
+static wasmtime_extern_t *_queue_aggregate_event;
+static wasmtime_extern_t *_store_config;
+static wasmtime_extern_t *_set_platform_data;
+
+static wasmtime_module_t *wasm_module;
+static wasmtime_memory_t *wasm_memory;
+static wasmtime_linker_t *wasm_linker;
+static wasmtime_store_t  *wasm_store;
+static wasm_engine_t *wasm_engine;
+static wasmtime_context_t *wasm_context;
+
+void initialize() {
+    wasm_byte_vec_t wasm_file;
+    wasm_file.data = (wasm_byte_t *) &___lib_bucketing_lib_release_wasm;
+    wasm_file.size = ___lib_bucketing_lib_release_wasm_len;
+
+    wasm_engine = wasm_engine_new();
+    assert(wasm_engine != NULL);
+    wasm_store = wasmtime_store_new(wasm_engine, NULL, NULL);
+    assert(wasm_store != NULL);
+    wasm_context = wasmtime_store_context(wasm_store);
+
+}
+
+void cleanup() {
+
+}
+
+void init_event_queue(char *envKey, char *options) {
+
+}
+
+char *flush_event_queue(char *envKey) {
+    return "";
+}
+
+void on_payload_success(char *envKey, char *payloadId) {
+
+}
+
+void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
+
+}
+
+char *generate_bucketed_config(char *token, char *user) {
+    return "";
+}
+
+int event_queue_size(char *envKey) {
+    return 0;
+}
+
+void queue_event(char *envKey, char *user, char *eventString) {
+
+}
+
+void queue_aggregate_event(char *envKey, char *user, char *eventString) {
+
+}
+
+void store_config(char *token, char *config) {
+
+}
+
+void set_platform_data(char *platformData) {
+
+}
+
+
 int main() {
     int ret = 0;
     // Set up our compilation context. Note that we could also work with a
@@ -17,7 +93,7 @@ int main() {
     wasmtime_context_t *context = wasmtime_store_context(store);
 
     // Read our input file, which in this case is a wasm text file.
-    FILE* file = fopen("hello.wat", "r");
+    FILE *file = fopen("hello.wat", "r");
     assert(file != NULL);
     fseek(file, 0L, SEEK_END);
     size_t file_size = ftell(file);
@@ -29,7 +105,7 @@ int main() {
 
     // Parse the wat into the binary wasm format
     wasm_byte_vec_t wasm;
-    wasmtime_error_t *error = wasmtime_wat2wasm(wat.data, wat.size, &wasm);
+    wasmtime_error_t * error = wasmtime_wat2wasm(wat.data, wat.size, &wasm);
     if (error != NULL)
         exit_with_error("failed to parse wat", error, NULL);
     wasm_byte_vec_delete(&wat);
@@ -37,7 +113,7 @@ int main() {
     // Now that we've got our binary webassembly we can compile our module.
     printf("Compiling module...\n");
     wasmtime_module_t *module = NULL;
-    error = wasmtime_module_new(engine, (uint8_t*) wasm.data, wasm.size, &module);
+    error = wasmtime_module_new(engine, (uint8_t *) wasm.data, wasm.size, &module);
     wasm_byte_vec_delete(&wasm);
     if (error != NULL)
         exit_with_error("failed to compile module", error, NULL);
