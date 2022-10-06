@@ -15,7 +15,6 @@ static wasmtime_extern_t *w__new;
 
 static wasmtime_module_t *wasm_module = NULL;
 static wasmtime_memory_t wasm_memory;
-static wasmtime_linker_t *wasm_linker;
 static wasmtime_store_t *wasm_store;
 static wasm_engine_t *wasm_engine;
 static wasmtime_context_t *wasm_context;
@@ -60,13 +59,38 @@ void initialize() {
     if (error != NULL)
         exit_with_error("Failed to initialize WASI configuration.", error, trap);
 
-    wasmtime_extern_t imports[4];
 
-    // Set up the linker - we'll need to bind our externals here later.
-    error = wasmtime_linker_instantiate(wasm_linker, wasm_context, wasm_module,
-                                        wasm_instance, &trap);
+    // Create all the imported functions
+    wasm_functype_t *env_abort_t = wasm_functype_new_4_0(wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32());
+    wasmtime_func_t env_abort;
+    wasmtime_func_new(wasm_context, env_abort_t, env__abort, NULL, NULL, &env_abort);
+    wasm_functype_delete(env_abort_t);
+
+    wasm_functype_t *env_date_now_t = wasm_functype_new_0_1(wasm_valtype_new_f64());
+    wasmtime_func_t env_date_now;
+    wasmtime_func_new(wasm_context, env_date_now_t, env__date_now, NULL, NULL, &env_date_now);
+    wasm_functype_delete(env_date_now_t);
+
+    wasm_functype_t *env_console_log_t = wasm_functype_new_1_0(wasm_valtype_new_i32());
+    wasmtime_func_t env_console_log;
+    wasmtime_func_new(wasm_context, env_console_log_t, env__console_log, NULL, NULL, &env_console_log);
+    wasm_functype_delete(env_console_log_t);
+
+    wasm_functype_t *env_seed_t = wasm_functype_new_0_1(wasm_valtype_new_f64());
+    wasmtime_func_t env_seed;
+    wasmtime_func_new(wasm_context, env_seed_t, env__seed, NULL, NULL, &env_seed);
+    wasm_functype_delete(env_seed_t);
+
+
+    wasmtime_extern_t imports[4] = {
+            {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_abort},
+            {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_date_now},
+            {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_console_log},
+            {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_seed}};
+
+    error = wasmtime_instance_new(wasm_context, wasm_module, imports, 4, wasm_instance, &trap);
     if (error != NULL || trap != NULL)
-        exit_with_error("failed to instantiate linking1", error, trap);
+        exit_with_error("failed to instantiate", error, trap);
 
 
     // Get the WASM Memory to access later.;
@@ -78,13 +102,6 @@ void initialize() {
     if (wasmtime_memory_size(wasm_context, &wasm_memory) != 0x10000) {
         exit_with_error("WASM Memory was not allocated to the expected size in pages.", NULL, NULL);
     }
-
-    // Create all the imported functions
-    wasm_functype_t *env_abort = wasm_functype_new_4_0(wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32());
-    wasmtime_func_t ;
-    wasmtime_func_new(wasm_context, env_abort, env__abort, NULL, NULL, &hello);
-    wasm_functype_delete(env_abort);
-
 
     // Find and return all functions exported from the WASM file.
     ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "w__new", 5, w__new);
@@ -131,8 +148,6 @@ void initialize() {
     ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "initEventQueue", 14, w_init_event_queue);
     assert(ok);
     assert(w__new->kind == WASMTIME_EXTERN_FUNC);
-
-
 }
 
 void cleanup() {
@@ -145,8 +160,6 @@ void init_event_queue(char *envKey, char *options) {
     wasmtime_val_t envKeyParam = getstringparam(envKey);
     wasmtime_val_t optionsJSONParam = getstringparam(options);
 }
-
-
 
 char *flush_event_queue(char *envKey) {
     wasmtime_val_t envKeyParam = getstringparam(envKey);
@@ -304,7 +317,7 @@ env__date_now(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, 
 
     wasmtime_val_t now;
     now.kind = WASMTIME_F64;
-    // This returns seconds - we need millis.
+    // TODO This returns seconds - we need millis.
     now.of.f64 = time(NULL) * 1000;
     results[0] = now;
     return NULL;
@@ -320,7 +333,7 @@ env__seed(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size
 
     wasmtime_val_t seed;
     seed.kind = WASMTIME_F64;
-    // This returns seconds - we need millis.
+    // TODO This returns seconds - we need millis.
     seed.of.f64 = rand() * time(NULL) * 1000;
     results[0] = seed;
 
