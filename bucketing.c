@@ -1,16 +1,16 @@
 #include "bucketing.h"
 
-static wasmtime_extern_t *_init_event_queue;
-static wasmtime_extern_t *_flush_event_queue;
-static wasmtime_extern_t *_on_payload_success;
-static wasmtime_extern_t *_on_payload_failure;
-static wasmtime_extern_t *_generate_bucketed_config;
-static wasmtime_extern_t *_event_queue_size;
-static wasmtime_extern_t *_queue_event;
-static wasmtime_extern_t *_queue_aggregate_event;
-static wasmtime_extern_t *_store_config;
-static wasmtime_extern_t *_set_platform_data;
-static wasmtime_extern_t *__new;
+static wasmtime_extern_t *w_init_event_queue;
+static wasmtime_extern_t *w_flush_event_queue;
+static wasmtime_extern_t *w_on_payload_success;
+static wasmtime_extern_t *w_on_payload_failure;
+static wasmtime_extern_t *w_generate_bucketed_config;
+static wasmtime_extern_t *w_event_queue_size;
+static wasmtime_extern_t *w_queue_event;
+static wasmtime_extern_t *w_queue_aggregate_event;
+static wasmtime_extern_t *w_store_config;
+static wasmtime_extern_t *w_set_platform_data;
+static wasmtime_extern_t *w__new;
 
 
 static wasmtime_module_t *wasm_module = NULL;
@@ -21,6 +21,12 @@ static wasm_engine_t *wasm_engine;
 static wasmtime_context_t *wasm_context;
 static wasmtime_instance_t *wasm_instance;
 
+wasmtime_val_t getstringparam(char *envKey) {
+    wasmtime_val_t param;
+    param.kind = WASMTIME_I32;
+    param.of.i32 = new_asc_string(envKey, strlen(envKey));
+    return param;
+}
 
 void initialize() {
     srand(time(NULL));
@@ -54,6 +60,8 @@ void initialize() {
     if (error != NULL)
         exit_with_error("Failed to initialize WASI configuration.", error, trap);
 
+    wasmtime_extern_t imports[4];
+
     // Set up the linker - we'll need to bind our externals here later.
     error = wasmtime_linker_instantiate(wasm_linker, wasm_context, wasm_module,
                                         wasm_instance, &trap);
@@ -71,51 +79,58 @@ void initialize() {
         exit_with_error("WASM Memory was not allocated to the expected size in pages.", NULL, NULL);
     }
 
+    // Create all the imported functions
+    wasm_functype_t *env_abort = wasm_functype_new_4_0(wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32(),wasm_valtype_new_i32());
+    wasmtime_func_t ;
+    wasmtime_func_new(wasm_context, env_abort, env__abort, NULL, NULL, &hello);
+    wasm_functype_delete(env_abort);
+
+
     // Find and return all functions exported from the WASM file.
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "__new", 5, __new);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "w__new", 5, w__new);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "setPlatformData", 15, _set_platform_data);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "setPlatformData", 15, w_set_platform_data);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "setConfigData", 13, _store_config);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "setConfigData", 13, w_store_config);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "queueAggregateEvent", 19, _queue_aggregate_event);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "queueAggregateEvent", 19, w_queue_aggregate_event);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "queueEvent", 10, _queue_event);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "queueEvent", 10, w_queue_event);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "onPayloadFailure", 16, _on_payload_failure);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "onPayloadFailure", 16, w_on_payload_failure);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "eventQueueSize", 14, _event_queue_size);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "eventQueueSize", 14, w_event_queue_size);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
     ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "generateBucketedConfigForUser", 29,
-                                      _generate_bucketed_config);
+                                      w_generate_bucketed_config);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "onPayloadSuccess", 16, _on_payload_success);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "onPayloadSuccess", 16, w_on_payload_success);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "flushEventQueue", 15, _flush_event_queue);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "flushEventQueue", 15, w_flush_event_queue);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "initEventQueue", 14, _init_event_queue);
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "initEventQueue", 14, w_init_event_queue);
     assert(ok);
-    assert(__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
 
 
 }
@@ -127,51 +142,68 @@ void cleanup() {
 }
 
 void init_event_queue(char *envKey, char *options) {
-
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t optionsJSONParam = getstringparam(options);
 }
 
+
+
 char *flush_event_queue(char *envKey) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+
     return "";
 }
 
 void on_payload_success(char *envKey, char *payloadId) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+
 
 }
 
 void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t payloadIdParam = getstringparam(payloadId);
 
 }
 
-char *generate_bucketed_config(char *token, char *user) {
+char *generate_bucketed_config(char *envKey, char *user) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+
     return "";
 }
 
 int event_queue_size(char *envKey) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
+
     return 0;
 }
 
 void queue_event(char *envKey, char *user, char *eventString) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
 
 }
 
 void queue_aggregate_event(char *envKey, char *user, char *eventString) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
 
 }
 
-void store_config(char *token, char *config) {
+void store_config(char *envKey, char *config) {
+    wasmtime_val_t envKeyParam = getstringparam(envKey);
 
 }
 
 void set_platform_data(char *platformData) {
+    wasmtime_val_t platformDataParam = getstringparam(platformData);
 
 }
 
 /**
- * asc_malloc allocates memory inside of the webassembly memory using the assemblyscript __new function.
+ * asc_malloc allocates memory inside of the webassembly memory using the assemblyscript w__new function.
  * @param length length of the memory to be allocated
  * @return start address inside wasm memory
  */
-static void *_malloc_asc(int length) {
+static void *asc_malloc(int length) {
     wasm_trap_t *trap = NULL;
     wasmtime_error_t * error = NULL;
     wasmtime_val_t results[1];
@@ -183,16 +215,16 @@ static void *_malloc_asc(int length) {
     params[1].kind = WASMTIME_I32;
     params[1].of.i32 = 1;
 
-    error = wasmtime_func_call(wasm_context, &(*__new).of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &(*w__new).of.func, params, 1, results,
                                1, &trap);
     if (error != NULL) {
-        exit_with_error("failed to call __new. Cannot allocate memory for parameter", error, trap);
+        exit_with_error("failed to call w__new. Cannot allocate memory for parameter", error, trap);
     }
     assert(results[0].kind == WASMTIME_EXTERNREF);
     return wasmtime_externref_data(results[0].of.externref);
 }
 
-static int new_asc_string(const char *data, int len) {
+static int new_asc_string(const char *data, unsigned long len) {
     int *addr = asc_malloc(len * 2);
     for (int i = 0; i < len * 2; i += 2) {
         wasmtime_memory_data(wasm_context, &wasm_memory)[*addr + i] = data[i / 2];
