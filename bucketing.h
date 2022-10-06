@@ -7,88 +7,69 @@
 #include <wasm.h>
 #include <wasmtime.h>
 #include <stdbool.h>
+#include <time.h>
 
 
 #include "lib/bucketing-lib.release.wasm.h"
 
-void initialize();
+static void initialize();
 
-void cleanup();
+static void cleanup();
 
-void init_event_queue(char *envKey, char *options);
+static void init_event_queue(char *envKey, char *options);
 
-char *flush_event_queue(char *envKey);
+static char *flush_event_queue(char *envKey);
 
-void on_payload_success(char *envKey, char *payloadId);
+static void on_payload_success(char *envKey, char *payloadId);
 
-void on_payload_failure(char *envKey, char *payloadId, bool retryable);
+static void on_payload_failure(char *envKey, char *payloadId, bool retryable);
 
-char *generate_bucketed_config(char *token, char *user);
+static char *generate_bucketed_config(char *token, char *user);
 
-int event_queue_size(char *envKey);
+static int event_queue_size(char *envKey);
 
-void queue_event(char *envKey, char *user, char *eventString);
+static void queue_event(char *envKey, char *user, char *eventString);
 
-void queue_aggregate_event(char *envKey, char *user, char *eventString);
+static void queue_aggregate_event(char *envKey, char *user, char *eventString);
 
-void store_config(char *token, char *config);
+static void store_config(char *token, char *config);
 
-void set_platform_data(char *platformData);
+static void set_platform_data(char *platformData);
 
-static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_trap_t *trap);
+static void *asc_malloc(int length);
 
-static wasm_trap_t *hello_callback(
-        void *env,
-        wasmtime_caller_t *caller,
-        const wasmtime_val_t *args,
-        size_t nargs,
-        wasmtime_val_t *results,
-        size_t nresults
-) {
-    printf("Calling back...\n");
-    printf("> Hello World!\n");
-    return NULL;
-}
+static int new_asc_string(const char *data, int len);
 
+static unsigned char *read_asc_string(int addr);
 
-static wasm_trap_t *env__abort(void *env,
+    static wasm_trap_t *env__abort(void *env,
                                wasmtime_caller_t *caller,
                                const wasmtime_val_t *args,
                                size_t nargs,
                                wasmtime_val_t *results,
-                               size_t nresults) {
-
-    return NULL;
-}
+                               size_t nresults);
 
 static wasm_trap_t *env__console_log(void *env,
                                      wasmtime_caller_t *caller,
                                      const wasmtime_val_t *args,
                                      size_t nargs,
                                      wasmtime_val_t *results,
-                                     size_t nresults) {
-
-    return NULL;
-}
+                                     size_t nresults);
 
 static wasm_trap_t *env__date_now(void *env,
                                   wasmtime_caller_t *caller,
                                   const wasmtime_val_t *args,
                                   size_t nargs,
                                   wasmtime_val_t *results,
-                                  size_t nresults) {
-
-    return NULL;
-}
+                                  size_t nresults);
 
 static wasm_trap_t *env__seed(void *env,
                               wasmtime_caller_t *caller,
                               const wasmtime_val_t *args,
                               size_t nargs,
                               wasmtime_val_t *results,
-                              size_t nresults) {
+                              size_t nresults);
 
-    return NULL;
-}
+static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_trap_t *trap);
 
 #endif //C_BUCKETING_LIB_BUCKETING_H
