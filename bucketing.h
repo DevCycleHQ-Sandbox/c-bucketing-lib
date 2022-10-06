@@ -1,0 +1,6 @@
+#ifndef C_BUCKETING_LIB_BUCKETING_H
+#define C_BUCKETING_LIB_BUCKETING_H
+
+void hello(void);
+
+#endif //C_BUCKETING_LIB_BUCKETING_H
