@@ -9,68 +9,68 @@
 #include <stdbool.h>
 #include <time.h>
 
-
+// WASM Binary Data Include -- See scripts/get-bucketing-lib.sh
 #include "lib/bucketing-lib.release.wasm.h"
 
-static void initialize();
+void initialize();
 
-static void cleanup();
+void cleanup();
 
-static void init_event_queue(char *envKey, char *options);
+void init_event_queue(char *envKey, char *options);
 
-static char *flush_event_queue(char *envKey);
+unsigned char *flush_event_queue(char *envKey);
 
-static void on_payload_success(char *envKey, char *payloadId);
+void on_payload_success(char *envKey, char *payloadId);
 
-static void on_payload_failure(char *envKey, char *payloadId, bool retryable);
+void on_payload_failure(char *envKey, char *payloadId, bool retryable);
 
-static char *generate_bucketed_config(char *envKey, char *user);
+unsigned char *generate_bucketed_config(char *envKey, char *user);
 
-static int event_queue_size(char *envKey);
+int event_queue_size(char *envKey);
 
-static void queue_event(char *envKey, char *user, char *eventString);
+void queue_event(char *envKey, char *user, char *eventString);
 
-static void queue_aggregate_event(char *envKey, char *user, char *eventString);
+void queue_aggregate_event(char *envKey, char *user, char *eventString);
 
-static void store_config(char *envKey, char *config);
+void store_config(char *envKey, char *config);
 
-static void set_platform_data(char *platformData);
+void set_platform_data(char *platformData);
 
-wasmtime_val_t getstringparam(char *string);
+static wasmtime_val_t new_asc_string_param(char *string);
 
-static void *asc_malloc(int length);
+static int asc_malloc(unsigned long length);
 
 static int new_asc_string(const char *data, unsigned long len);
 
 static unsigned char *read_asc_string(int addr);
 
-static wasm_trap_t *env__abort(void *env,
-                               wasmtime_caller_t *caller,
-                               const wasmtime_val_t *args,
-                               size_t nargs,
-                               wasmtime_val_t *results,
-                               size_t nresults);
+static wasm_trap_t *env_abort_callback(void *env,
+                                       wasmtime_caller_t *caller,
+                                       const wasmtime_val_t *args,
+                                       size_t nargs,
+                                       wasmtime_val_t *results,
+                                       size_t nresults);
 
-static wasm_trap_t *env__console_log(void *env,
-                                     wasmtime_caller_t *caller,
-                                     const wasmtime_val_t *args,
-                                     size_t nargs,
-                                     wasmtime_val_t *results,
-                                     size_t nresults);
+static wasm_trap_t *env_console_log_callback(void *env,
+                                             wasmtime_caller_t *caller,
+                                             const wasmtime_val_t *args,
+                                             size_t nargs,
+                                             wasmtime_val_t *results,
+                                             size_t nresults);
 
-static wasm_trap_t *env__date_now(void *env,
-                                  wasmtime_caller_t *caller,
-                                  const wasmtime_val_t *args,
-                                  size_t nargs,
-                                  wasmtime_val_t *results,
-                                  size_t nresults);
+static wasm_trap_t *env_date_now_callback(void *env,
+                                          wasmtime_caller_t *caller,
+                                          const wasmtime_val_t *args,
+                                          size_t nargs,
+                                          wasmtime_val_t *results,
+                                          size_t nresults);
 
-static wasm_trap_t *env__seed(void *env,
-                              wasmtime_caller_t *caller,
-                              const wasmtime_val_t *args,
-                              size_t nargs,
-                              wasmtime_val_t *results,
-                              size_t nresults);
+static wasm_trap_t *env_seed_callback(void *env,
+                                      wasmtime_caller_t *caller,
+                                      const wasmtime_val_t *args,
+                                      size_t nargs,
+                                      wasmtime_val_t *results,
+                                      size_t nresults);
 
 static void exit_with_error(const char *message, wasmtime_error_t *error,
                             wasm_trap_t *trap);

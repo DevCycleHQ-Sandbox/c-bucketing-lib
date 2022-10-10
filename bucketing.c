@@ -1,5 +1,6 @@
 #include "bucketing.h"
 
+// WASM Exported Functions
 static wasmtime_extern_t *w_init_event_queue;
 static wasmtime_extern_t *w_flush_event_queue;
 static wasmtime_extern_t *w_on_payload_success;
@@ -13,6 +14,7 @@ static wasmtime_extern_t *w_set_platform_data;
 static wasmtime_extern_t *w__new;
 
 
+// Core WASM Components
 static wasmtime_module_t *wasm_module = NULL;
 static wasmtime_memory_t wasm_memory;
 static wasmtime_store_t *wasm_store;
@@ -20,10 +22,6 @@ static wasm_engine_t *wasm_engine;
 static wasmtime_context_t *wasm_context;
 static wasmtime_instance_t *wasm_instance;
 
-wasmtime_val_t getstringparam(char *envKey) {
-    wasmtime_val_t param = {.kind = WASMTIME_I32, .of.i32 =new_asc_string(envKey, strlen(envKey))};
-    return param;
-}
 
 void initialize() {
     srand(time(NULL));
@@ -62,22 +60,23 @@ void initialize() {
     wasm_functype_t *env_abort_t = wasm_functype_new_4_0(wasm_valtype_new_i32(), wasm_valtype_new_i32(),
                                                          wasm_valtype_new_i32(), wasm_valtype_new_i32());
     wasmtime_func_t env_abort;
-    wasmtime_func_new(wasm_context, env_abort_t, env__abort, NULL, NULL, &env_abort);
+    wasmtime_func_new(wasm_context, env_abort_t, env_abort_callback, NULL, NULL, &env_abort);
     wasm_functype_delete(env_abort_t);
 
     wasm_functype_t *env_date_now_t = wasm_functype_new_0_1(wasm_valtype_new_f64());
     wasmtime_func_t env_date_now;
-    wasmtime_func_new(wasm_context, env_date_now_t, env__date_now, NULL, NULL, &env_date_now);
+    wasmtime_func_new(wasm_context, env_date_now_t, env_date_now_callback, NULL, NULL, &env_date_now);
     wasm_functype_delete(env_date_now_t);
+
 
     wasm_functype_t *env_console_log_t = wasm_functype_new_1_0(wasm_valtype_new_i32());
     wasmtime_func_t env_console_log;
-    wasmtime_func_new(wasm_context, env_console_log_t, env__console_log, NULL, NULL, &env_console_log);
+    wasmtime_func_new(wasm_context, env_console_log_t, env_console_log_callback, NULL, NULL, &env_console_log);
     wasm_functype_delete(env_console_log_t);
 
     wasm_functype_t *env_seed_t = wasm_functype_new_0_1(wasm_valtype_new_f64());
     wasmtime_func_t env_seed;
-    wasmtime_func_new(wasm_context, env_seed_t, env__seed, NULL, NULL, &env_seed);
+    wasmtime_func_new(wasm_context, env_seed_t, env_seed_callback, NULL, NULL, &env_seed);
     wasm_functype_delete(env_seed_t);
 
 
@@ -92,12 +91,12 @@ void initialize() {
         exit_with_error("failed to instantiate", error, trap);
 
 
-    // Get the WASM Memory to access later.;
-    wasmtime_extern_t item;
+    // Get the WASM Memory to access later.
+    wasmtime_extern_t memory;
     bool ok;
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "memory", strlen("memory"), &item);
-    assert(ok && item.kind == WASMTIME_EXTERN_MEMORY);
-    wasm_memory = item.of.memory;
+    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "memory", strlen("memory"), &memory);
+    assert(ok && memory.kind == WASMTIME_EXTERN_MEMORY);
+    wasm_memory = memory.of.memory;
     if (wasmtime_memory_size(wasm_context, &wasm_memory) != 0x10000) {
         exit_with_error("WASM Memory was not allocated to the expected size in pages.", NULL, NULL);
     }
@@ -147,6 +146,9 @@ void initialize() {
     ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "initEventQueue", 14, w_init_event_queue);
     assert(ok);
     assert(w__new->kind == WASMTIME_EXTERN_FUNC);
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 void cleanup() {
@@ -156,58 +158,217 @@ void cleanup() {
 }
 
 void init_event_queue(char *envKey, char *options) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
-    wasmtime_val_t optionsJSONParam = getstringparam(options);
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[1];
+    wasmtime_val_t params[2];
+
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasmtime_val_t optionsJSONParam = new_asc_string_param(options);
+    params[0] = envKeyParam;
+    params[1] = optionsJSONParam;
+    error = wasmtime_func_call(wasm_context, &(*w_init_event_queue).of.func, params, 2, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_init_event_queue.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
-char *flush_event_queue(char *envKey) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+unsigned char *flush_event_queue(char *envKey) {
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
 
-    return "";
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[1];
+    wasmtime_val_t params[1];
+
+    params[0] = envKeyParam;
+    error = wasmtime_func_call(wasm_context, &(*w_event_queue_size).of.func, params, 1, results,
+                               1, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_event_queue_size.", error, trap);
+    }
+    assert(results[0].kind == WASMTIME_I32);
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
+
+    return read_asc_string(results[0].of.i32);
 }
 
 void on_payload_success(char *envKey, char *payloadId) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
 
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[2];
 
+    wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
+    params[0] = envKeyParam;
+    params[1] = payloadIdParam;
+    error = wasmtime_func_call(wasm_context, &(*w_on_payload_success).of.func, params, 2, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_on_payload_success.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
-    wasmtime_val_t payloadIdParam = getstringparam(payloadId);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[3];
 
+    params[0] = envKeyParam;
+    params[1] = payloadIdParam;
+    params[2].of.i32 = retryable ? 1 : 0;
+    params[2].kind = WASMTIME_I32;
+    error = wasmtime_func_call(wasm_context, &(*w_on_payload_failure).of.func, params, 3, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_on_payload_failure.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
-char *generate_bucketed_config(char *envKey, char *user) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+unsigned char *generate_bucketed_config(char *envKey, char *user) {
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasmtime_val_t userParam = new_asc_string_param(user);
 
-    return "";
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[1];
+    wasmtime_val_t params[2];
+
+    params[0] = envKeyParam;
+    params[1] = userParam;
+    error = wasmtime_func_call(wasm_context, &(*w_event_queue_size).of.func, params, 2, results,
+                               1, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_event_queue_size.", error, trap);
+    }
+    assert(results[0].kind == WASMTIME_I32);
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
+
+    return read_asc_string(results[0].of.i32);
 }
 
 int event_queue_size(char *envKey) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[1];
+    wasmtime_val_t params[1];
 
-    return 0;
+    params[0] = envKeyParam;
+    error = wasmtime_func_call(wasm_context, &(*w_event_queue_size).of.func, params, 1, results,
+                               1, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_event_queue_size.", error, trap);
+    }
+    assert(results[0].kind == WASMTIME_I32);
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
+
+    return results[0].of.i32;
 }
 
 void queue_event(char *envKey, char *user, char *eventString) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasmtime_val_t userParam = new_asc_string_param(user);
 
+    wasmtime_val_t eventStringParam = new_asc_string_param(eventString);
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[3];
+
+    params[0] = envKeyParam;
+    params[1] = userParam;
+    params[2] = eventStringParam;
+    error = wasmtime_func_call(wasm_context, &(*w_queue_event).of.func, params, 3, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_queue_event.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 void queue_aggregate_event(char *envKey, char *user, char *eventString) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
+    wasmtime_val_t userParam = new_asc_string_param(user);
 
+    wasmtime_val_t eventStringParam = new_asc_string_param(eventString);
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[3];
+
+    params[0] = envKeyParam;
+    params[1] = userParam;
+    params[2] = eventStringParam;
+    error = wasmtime_func_call(wasm_context, &(*w_queue_aggregate_event).of.func, params, 3, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_queue_aggregate_event.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 void store_config(char *envKey, char *config) {
-    wasmtime_val_t envKeyParam = getstringparam(envKey);
+    wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
 
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[2];
+
+    wasmtime_val_t configParam = new_asc_string_param(config);
+    params[0] = envKeyParam;
+    params[1] = configParam;
+    error = wasmtime_func_call(wasm_context, &(*w_store_config).of.func, params, 2, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_store_config.", error, trap);
+    }
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 void set_platform_data(char *platformData) {
-    wasmtime_val_t platformDataParam = getstringparam(platformData);
+    wasmtime_val_t envKeyParam = new_asc_string_param(platformData);
 
+    wasm_trap_t *trap = NULL;
+    wasmtime_error_t * error = NULL;
+    wasmtime_val_t results[0];
+    wasmtime_val_t params[1];
+    params[0] = envKeyParam;
+    error = wasmtime_func_call(wasm_context, &(*w_store_config).of.func, params, 1, results,
+                               0, &trap);
+    if (error != NULL) {
+        exit_with_error("failed to call w_store_config.", error, trap);
+    }
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
 }
 
 /**
@@ -215,49 +376,47 @@ void set_platform_data(char *platformData) {
  * @param length length of the memory to be allocated
  * @return start address inside wasm memory
  */
-static void *asc_malloc(int length) {
+static int asc_malloc(unsigned long length) {
     wasm_trap_t *trap = NULL;
     wasmtime_error_t * error = NULL;
     wasmtime_val_t results[1];
     wasmtime_val_t params[2];
     // Arg 0 is the size to allocate.
     params[0].kind = WASMTIME_I32;
-    params[0].of.i32 = length;
+    params[0].of.i32 = (int) length;
     // Arg 1 is the type of allocation. We're assuming we only care about strings - class id of 1
     params[1].kind = WASMTIME_I32;
     params[1].of.i32 = 1;
 
-    error = wasmtime_func_call(wasm_context, &(*w__new).of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &(*w__new).of.func, params, 2, results,
                                1, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w__new. Cannot allocate memory for parameter", error, trap);
     }
-    assert(results[0].kind == WASMTIME_EXTERNREF);
-    return wasmtime_externref_data(results[0].of.externref);
+    assert(results[0].kind == WASMTIME_I32);
+
+    wasm_trap_delete(trap);
+    wasmtime_error_delete(error);
+    return results[0].of.i32;
 }
 
 static int new_asc_string(const char *data, unsigned long len) {
-    int *addr = asc_malloc(len * 2);
+    int addr = asc_malloc(len * 2);
     for (int i = 0; i < len * 2; i += 2) {
-        wasmtime_memory_data(wasm_context, &wasm_memory)[*addr + i] = data[i / 2];
+        wasmtime_memory_data(wasm_context, &wasm_memory)[addr + i] = data[i / 2];
     }
-    return *addr;
+    return addr;
 }
 
 static unsigned char *read_asc_string(int addr) {
-    int length = 0;
-    uint8_t raw_length[] = {
+    uint8_t bytes[] = {
             wasmtime_memory_data(wasm_context, &wasm_memory)[addr - 4],
             wasmtime_memory_data(wasm_context, &wasm_memory)[addr - 3],
             wasmtime_memory_data(wasm_context, &wasm_memory)[addr - 2],
             wasmtime_memory_data(wasm_context, &wasm_memory)[addr - 1],
     };
 
-    // Convert the raw 4 bytes to an int
-    for (int i = 0; i < 4; i++) {
-        length = (length << 1) + raw_length[i];
-        // some bitshift nonsense here
-    }
+    uint32_t length = bytes[0] + (bytes[1] << 8) + (bytes[2] << 16) + (bytes[3] << 24);
 
     unsigned char *data = malloc(length);
     for (int i = 0; i < length; i += 2) {
@@ -282,9 +441,10 @@ static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_t
     exit(1);
 }
 
-wasm_trap_t *
-env__abort(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs, wasmtime_val_t *results,
-           size_t nresults) {
+static wasm_trap_t *
+env_abort_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+                   wasmtime_val_t *results,
+                   size_t nresults) {
 
     // message address pointer
     unsigned char *message = read_asc_string(args[0].of.i32);
@@ -299,15 +459,17 @@ env__abort(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, siz
     return NULL;
 }
 
-wasm_trap_t *env__console_log(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
-                              wasmtime_val_t *results, size_t nresults) {
+static wasm_trap_t *
+env_console_log_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+                         wasmtime_val_t *results, size_t nresults) {
     printf("%s\n", read_asc_string(args[0].of.i32));
     return NULL;
 }
 
-wasm_trap_t *
-env__date_now(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs, wasmtime_val_t *results,
-              size_t nresults) {
+static wasm_trap_t *
+env_date_now_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+                      wasmtime_val_t *results,
+                      size_t nresults) {
 
     if (nresults != 1) {
         char *message = "failed to match proper return results length.";
@@ -322,9 +484,10 @@ env__date_now(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, 
     return NULL;
 }
 
-wasm_trap_t *
-env__seed(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs, wasmtime_val_t *results,
-          size_t nresults) {
+static wasm_trap_t *
+env_seed_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+                  wasmtime_val_t *results,
+                  size_t nresults) {
     if (nresults != 1) {
         char *message = "failed to match proper return results length.";
         return wasmtime_trap_new(message, strlen(message));
@@ -337,4 +500,10 @@ env__seed(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size
     results[0] = seed;
 
     return NULL;
+}
+
+// This is a helper function that wraps creating an asc string
+static wasmtime_val_t new_asc_string_param(char *envKey) {
+    wasmtime_val_t param = {.kind = WASMTIME_I32, .of.i32 = new_asc_string(envKey, strlen(envKey))};
+    return param;
 }
