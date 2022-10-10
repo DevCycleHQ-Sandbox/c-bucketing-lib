@@ -44,7 +44,6 @@ bool initialize() {
     wasmtime_func_new(wasm_context, env_date_now_t, env_date_now_callback, NULL, NULL, &env_date_now);
     wasm_functype_delete(env_date_now_t);
 
-
     wasm_functype_t *env_console_log_t = wasm_functype_new_1_0(wasm_valtype_new_i32());
     wasmtime_func_t env_console_log;
     wasmtime_func_new(wasm_context, env_console_log_t, env_console_log_callback, NULL, NULL, &env_console_log);
@@ -452,6 +451,10 @@ env_abort_callback(__attribute__((unused)) __attribute__((unused)) void *env,
                    wasmtime_val_t *results,
                    size_t nresults) {
 
+    if (nresults != 4) {
+        char *message = "failed to match proper args length.";
+        return wasmtime_trap_new(message, strlen(message));
+    }
     // message address pointer
     unsigned char *message = read_asc_string(args[0].of.i32);
     // filename address pointer

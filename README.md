@@ -16,3 +16,7 @@ for wasmtime itself.
 This library is meant to be a 1:1 passthrough for all the data required to call the 
 bucketing library in web assembly.
 This assumes that the implementing languages that use this library will handle all the string parsing into language specific datatypes.
+
+## Developing
+
+We use CLion as the main IDE - but any IDE compatible with CMake will work.
