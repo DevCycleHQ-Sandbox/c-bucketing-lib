@@ -181,7 +181,7 @@ unsigned char *flush_event_queue(char *envKey) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
-
+    wasmtime_val_delete(&envKeyParam);
     return read_asc_string(results[0].of.i32);
 }
 
@@ -204,6 +204,8 @@ void on_payload_success(char *envKey, char *payloadId) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
+
 }
 
 void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
@@ -225,7 +227,12 @@ void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
     }
 
     wasm_trap_delete(trap);
+
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
+    wasmtime_val_delete(&payloadIdParam);
+
+
 }
 
 unsigned char *generate_bucketed_config(char *envKey, char *user) {
@@ -248,6 +255,9 @@ unsigned char *generate_bucketed_config(char *envKey, char *user) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
+    wasmtime_val_delete(&userParam);
+
 
     return read_asc_string(results[0].of.i32);
 }
@@ -269,6 +279,7 @@ int event_queue_size(char *envKey) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
 
     return results[0].of.i32;
 }
@@ -294,6 +305,9 @@ void queue_event(char *envKey, char *user, char *eventString) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
+    wasmtime_val_delete(&userParam);
+    wasmtime_val_delete(&eventStringParam);
 }
 
 void queue_aggregate_event(char *envKey, char *user, char *eventString) {
@@ -317,6 +331,8 @@ void queue_aggregate_event(char *envKey, char *user, char *eventString) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(params);
+
 }
 
 void store_config(char *envKey, char *config) {
@@ -338,16 +354,19 @@ void store_config(char *envKey, char *config) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(&envKeyParam);
+    wasmtime_val_delete(&configParam);
+
 }
 
 void set_platform_data(char *platformData) {
-    wasmtime_val_t envKeyParam = new_asc_string_param(platformData);
+    wasmtime_val_t platformDataParam = new_asc_string_param(platformData);
 
     wasm_trap_t *trap = NULL;
     wasmtime_error_t * error = NULL;
     wasmtime_val_t results[0];
     wasmtime_val_t params[1];
-    params[0] = envKeyParam;
+    params[0] = platformDataParam;
     error = wasmtime_func_call(wasm_context, &(*w_set_platform_data).of.func, params, 1, results,
                                0, &trap);
     if (error != NULL) {
@@ -355,6 +374,8 @@ void set_platform_data(char *platformData) {
     }
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(params);
+
 }
 
 static int asc_malloc(unsigned long length) {
@@ -378,6 +399,7 @@ static int asc_malloc(unsigned long length) {
 
     wasm_trap_delete(trap);
     wasmtime_error_delete(error);
+    wasmtime_val_delete(params);
     return results[0].of.i32;
 }
 
@@ -424,7 +446,9 @@ static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_t
 }
 
 static wasm_trap_t *
-env_abort_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+env_abort_callback(__attribute__((unused)) __attribute__((unused)) void *env,
+                   __attribute__((unused)) wasmtime_caller_t *caller, const wasmtime_val_t *args,
+                   __attribute__((unused)) size_t nargs,
                    wasmtime_val_t *results,
                    size_t nresults) {
 
@@ -436,14 +460,14 @@ env_abort_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *a
     int line = args[2].of.i32;
     // column number
     int col = args[3].of.i32;
-    printf("%s : %s - %d:%d\n", message, filename, line, col);
+    printf("%s (%s) - %d:%d\n", message, filename, line, col);
     exit(1);
-    return NULL;
 }
 
 static wasm_trap_t *
-env_console_log_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
-                         wasmtime_val_t *results, size_t nresults) {
+env_console_log_callback(__attribute__((unused)) void *env, __attribute__((unused)) wasmtime_caller_t *caller,
+                         const wasmtime_val_t *args, size_t nargs,
+                         __attribute__((unused)) wasmtime_val_t *results, __attribute__((unused)) size_t nresults) {
     if (nargs >= 1) {
         printf("%s\n", read_asc_string(args[0].of.i32));
     }
@@ -451,7 +475,9 @@ env_console_log_callback(void *env, wasmtime_caller_t *caller, const wasmtime_va
 }
 
 static wasm_trap_t *
-env_date_now_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+env_date_now_callback(__attribute__((unused)) __attribute__((unused)) void *env,
+                      __attribute__((unused)) wasmtime_caller_t *caller,
+                      __attribute__((unused)) const wasmtime_val_t *args, __attribute__((unused)) size_t nargs,
                       wasmtime_val_t *results,
                       size_t nresults) {
 
@@ -469,7 +495,9 @@ env_date_now_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t
 }
 
 static wasm_trap_t *
-env_seed_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *args, size_t nargs,
+env_seed_callback(__attribute__((unused)) __attribute__((unused)) void *env,
+                  __attribute__((unused)) wasmtime_caller_t *caller,
+                  __attribute__((unused)) const wasmtime_val_t *args, size_t nargs,
                   wasmtime_val_t *results,
                   size_t nresults) {
     if (nresults != 1) {
@@ -480,13 +508,12 @@ env_seed_callback(void *env, wasmtime_caller_t *caller, const wasmtime_val_t *ar
     wasmtime_val_t seed;
     seed.kind = WASMTIME_F64;
     // FIXME This returns seconds - we need millis. There's no standard implementation so this will have to be implementation specific
-    seed.of.f64 = rand() * time(NULL) * 1000;
+    seed.of.f64 = (float) (rand() * time(NULL) * 1000);
     results[0] = seed;
 
     return NULL;
 }
 
-// This is a helper function that wraps creating an asc string
 static wasmtime_val_t new_asc_string_param(char *envKey) {
     wasmtime_val_t param = {.kind = WASMTIME_I32, .of.i32 = new_asc_string(envKey, strlen(envKey))};
     return param;
