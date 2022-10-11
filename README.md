@@ -7,9 +7,8 @@ of this library is to provide support for more languages than those that current
 We use git submodules for sourcing the wasmtime library, which has some dependencies that are needed.
 Check `scripts/brew-install-depends.sh` for the list (assuming developing on OSX).
 
-Once this repo is checked out - run `git submodule update --init` to update the submodules inside at the root level.
-Then you'll need to enter `third_party/wasmtime` and run `git submodule update --init` again to initialize all the depends 
-for wasmtime itself. 
+Once this repo is checked out - run `git submodule update --init --recursive` to update the submodules inside at the root level and cascade down.
+
 
 ## Usage
 
