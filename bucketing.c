@@ -1,5 +1,8 @@
 #include "bucketing.h"
 
+// WASM Binary Data Include -- See scripts/get-bucketing-lib.sh
+#include "lib/bucketing-lib.release.wasm.h"
+
 bool initialize() {
     // We're storing the wasm compiled file in a constant via XXD.
     // This constant is set prior to compilation and is embedded inside the lib.
@@ -16,7 +19,7 @@ bool initialize() {
     wasm_context = wasmtime_store_context(wasm_store);
     error = wasmtime_module_new(wasm_engine, (uint8_t *) wasm_file.data, wasm_file.size,
                                 &wasm_module);
-    wasm_byte_vec_delete(&wasm_file);
+    //wasm_byte_vec_delete(&wasm_file);
     if (error != NULL) {
         exit_with_error("Could not instantiate WASM module.", error, NULL);
     }
@@ -132,8 +135,10 @@ bool initialize() {
     assert(ok);
     assert(w_init_event_queue->kind == WASMTIME_EXTERN_FUNC);
 
-    wasm_trap_delete(trap);
-    wasmtime_error_delete(error);
+    if(trap)
+        wasm_trap_delete(trap);
+    if(error)
+        wasmtime_error_delete(error);
     return ok;
 }
 

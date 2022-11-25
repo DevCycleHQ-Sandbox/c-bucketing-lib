@@ -9,10 +9,6 @@
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>
-
-// WASM Binary Data Include -- See scripts/get-bucketing-lib.sh
-#include "lib/bucketing-lib.release.wasm.h"
-
 // Values that can be overridden by the user.
 #ifndef DVCBUCKETING_WASM_PAGES
 #define DVCBUCKETING_WASM_PAGES 0x10000
