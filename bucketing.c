@@ -64,76 +64,78 @@ bool initialize() {
             {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_console_log},
             {.kind = WASMTIME_EXTERN_FUNC, .of.func = env_seed}};
 
-    error = wasmtime_instance_new(wasm_context, wasm_module, imports, 4, wasm_instance, &trap);
-    if (error != NULL || trap != NULL)
+    error = wasmtime_instance_new(wasm_context, wasm_module, imports, 4, &wasm_instance, &trap);
+    if ((error != NULL || trap != NULL) != 0)
         exit_with_error("failed to instantiate", error, trap);
 
 
     // Get the WASM Memory to access later.
     wasmtime_extern_t memory;
-    bool ok;
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, "memory", strlen("memory"), &memory);
+    bool ok = false;
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, "memory", strlen("memory"), &memory);
     assert(ok && memory.kind == WASMTIME_EXTERN_MEMORY);
     wasm_memory = memory.of.memory;
-    if (wasmtime_memory_size(wasm_context, &wasm_memory) != DVCBUCKETING_WASM_PAGES) {
+    uint64_t _memory_size = wasmtime_memory_size(wasm_context, &wasm_memory);
+    if (_memory_size != DVCBUCKETING_WASM_PAGES) {
+
         exit_with_error("WASM Memory was not allocated to the expected size in pages.", NULL, NULL);
     }
 
     // Find and return all functions exported from the WASM file.
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_ASC_NEW,
-                                      strlen(DVCBUCKETING_ASC_NEW), w__new);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_ASC_NEW,
+                                      strlen(DVCBUCKETING_ASC_NEW), &w__new);
     assert(ok);
-    assert(w__new->kind == WASMTIME_EXTERN_FUNC);
+    assert(w__new.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_SETPLATFORMDATA,
-                                      strlen(DVCBUCKETING_SETPLATFORMDATA), w_set_platform_data);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_SETPLATFORMDATA,
+                                      strlen(DVCBUCKETING_SETPLATFORMDATA), &w_set_platform_data);
     assert(ok);
-    assert(w_set_platform_data->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_set_platform_data.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_SETCONFIGDATA,
-                                      strlen(DVCBUCKETING_SETCONFIGDATA), w_store_config);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_SETCONFIGDATA,
+                                      strlen(DVCBUCKETING_SETCONFIGDATA), &w_store_config);
     assert(ok);
-    assert(w_store_config->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_store_config.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_QUEUEAGGREGATEEVENT,
-                                      strlen(DVCBUCKETING_QUEUEAGGREGATEEVENT), w_queue_aggregate_event);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_QUEUEAGGREGATEEVENT,
+                                      strlen(DVCBUCKETING_QUEUEAGGREGATEEVENT), &w_queue_aggregate_event);
     assert(ok);
-    assert(w_queue_aggregate_event->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_queue_aggregate_event.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_QUEUEEVENT,
-                                      strlen(DVCBUCKETING_QUEUEEVENT), w_queue_event);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_QUEUEEVENT,
+                                      strlen(DVCBUCKETING_QUEUEEVENT), &w_queue_event);
     assert(ok);
-    assert(w_queue_event->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_queue_event.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_ONPAYLOADFAILURE,
-                                      strlen(DVCBUCKETING_ONPAYLOADFAILURE), w_on_payload_failure);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_ONPAYLOADFAILURE,
+                                      strlen(DVCBUCKETING_ONPAYLOADFAILURE), &w_on_payload_failure);
     assert(ok);
-    assert(w_on_payload_failure->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_on_payload_failure.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_EVENTQUEUESIZE,
-                                      strlen(DVCBUCKETING_EVENTQUEUESIZE), w_event_queue_size);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_EVENTQUEUESIZE,
+                                      strlen(DVCBUCKETING_EVENTQUEUESIZE), &w_event_queue_size);
     assert(ok);
-    assert(w_event_queue_size->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_event_queue_size.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_GENERATEBUCKETEDCONFIGFORUSER,
-                                      strlen(DVCBUCKETING_GENERATEBUCKETEDCONFIGFORUSER), w_generate_bucketed_config);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_GENERATEBUCKETEDCONFIGFORUSER,
+                                      strlen(DVCBUCKETING_GENERATEBUCKETEDCONFIGFORUSER), &w_generate_bucketed_config);
     assert(ok);
-    assert(w_generate_bucketed_config->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_generate_bucketed_config.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_ONPAYLOADSUCCESS,
-                                      strlen(DVCBUCKETING_ONPAYLOADSUCCESS), w_on_payload_success);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_ONPAYLOADSUCCESS,
+                                      strlen(DVCBUCKETING_ONPAYLOADSUCCESS), &w_on_payload_success);
     assert(ok);
-    assert(w_on_payload_success->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_on_payload_success.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_FLUSHEVENTQUEUE,
-                                      strlen(DVCBUCKETING_FLUSHEVENTQUEUE), w_flush_event_queue);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_FLUSHEVENTQUEUE,
+                                      strlen(DVCBUCKETING_FLUSHEVENTQUEUE), &w_flush_event_queue);
     assert(ok);
-    assert(w_flush_event_queue->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_flush_event_queue.kind == WASMTIME_EXTERN_FUNC);
 
-    ok = wasmtime_instance_export_get(wasm_context, wasm_instance, DVCBUCKETING_INITEVENTQUEUE,
-                                      strlen(DVCBUCKETING_INITEVENTQUEUE), w_init_event_queue);
+    ok = wasmtime_instance_export_get(wasm_context, &wasm_instance, DVCBUCKETING_INITEVENTQUEUE,
+                                      strlen(DVCBUCKETING_INITEVENTQUEUE), &w_init_event_queue);
     assert(ok);
-    assert(w_init_event_queue->kind == WASMTIME_EXTERN_FUNC);
+    assert(w_init_event_queue.kind == WASMTIME_EXTERN_FUNC);
 
     if(trap)
         wasm_trap_delete(trap);
@@ -158,7 +160,7 @@ void init_event_queue(char *envKey, char *options) {
     wasmtime_val_t optionsJSONParam = new_asc_string_param(options);
     params[0] = envKeyParam;
     params[1] = optionsJSONParam;
-    error = wasmtime_func_call(wasm_context, &(*w_init_event_queue).of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w_init_event_queue).of.func, params, 2, results,
                                0, &trap);
     if (error != NULL)
         exit_with_error("failed to call w_init_event_queue.", error, trap);
@@ -176,7 +178,7 @@ unsigned char *flush_event_queue(char *envKey) {
     wasmtime_val_t results[1];
     wasmtime_val_t params[1];
     params[0] = envKeyParam;
-    error = wasmtime_func_call(wasm_context, &(*w_flush_event_queue).of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &(w_flush_event_queue).of.func, params, 1, results,
                                1, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_event_queue_size.", error, trap);
@@ -200,7 +202,7 @@ void on_payload_success(char *envKey, char *payloadId) {
     wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
     params[0] = envKeyParam;
     params[1] = payloadIdParam;
-    error = wasmtime_func_call(wasm_context, &(*w_on_payload_success).of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w_on_payload_success).of.func, params, 2, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_on_payload_success.", error, trap);
@@ -224,7 +226,7 @@ void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
     params[1] = payloadIdParam;
     params[2].kind = WASMTIME_I32;
     params[2].of.i32 = retryable ? 1 : 0;
-    error = wasmtime_func_call(wasm_context, &(*w_on_payload_failure).of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &(w_on_payload_failure).of.func, params, 3, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_on_payload_failure.", error, trap);
@@ -250,7 +252,7 @@ unsigned char *generate_bucketed_config(char *envKey, char *user) {
 
     params[0] = envKeyParam;
     params[1] = userParam;
-    error = wasmtime_func_call(wasm_context, &(*w_generate_bucketed_config).of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w_generate_bucketed_config).of.func, params, 2, results,
                                1, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_generate_bucketed_config.", error, trap);
@@ -274,7 +276,7 @@ int event_queue_size(char *envKey) {
     wasmtime_val_t params[1];
 
     params[0] = envKeyParam;
-    error = wasmtime_func_call(wasm_context, &(*w_event_queue_size).of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &(w_event_queue_size).of.func, params, 1, results,
                                1, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_event_queue_size.", error, trap);
@@ -301,7 +303,7 @@ void queue_event(char *envKey, char *user, char *eventString) {
     params[0] = envKeyParam;
     params[1] = userParam;
     params[2] = eventStringParam;
-    error = wasmtime_func_call(wasm_context, &(*w_queue_event).of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &(w_queue_event).of.func, params, 3, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_queue_event.", error, trap);
@@ -327,7 +329,7 @@ void queue_aggregate_event(char *envKey, char *user, char *eventString) {
     params[0] = envKeyParam;
     params[1] = userParam;
     params[2] = eventStringParam;
-    error = wasmtime_func_call(wasm_context, &(*w_queue_aggregate_event).of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &(w_queue_aggregate_event).of.func, params, 3, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_queue_aggregate_event.", error, trap);
@@ -350,7 +352,7 @@ void store_config(char *envKey, char *config) {
     wasmtime_val_t configParam = new_asc_string_param(config);
     params[0] = envKeyParam;
     params[1] = configParam;
-    error = wasmtime_func_call(wasm_context, &(*w_store_config).of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w_store_config).of.func, params, 2, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_store_config.", error, trap);
@@ -371,7 +373,7 @@ void set_platform_data(char *platformData) {
     wasmtime_val_t results[0];
     wasmtime_val_t params[1];
     params[0] = platformDataParam;
-    error = wasmtime_func_call(wasm_context, &(*w_set_platform_data).of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &(w_set_platform_data).of.func, params, 1, results,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_set_platform_data.", error, trap);
@@ -394,7 +396,7 @@ static int asc_malloc(unsigned long length) {
     params[1].kind = WASMTIME_I32;
     params[1].of.i32 = 1;
 
-    error = wasmtime_func_call(wasm_context, &(*w__new).of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w__new).of.func, params, 2, results,
                                1, &trap);
     if (error != NULL)
         exit_with_error("failed to call w__new. Cannot allocate memory for parameter", error, trap);

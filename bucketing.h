@@ -11,7 +11,7 @@
 #include <string.h>
 // Values that can be overridden by the user.
 #ifndef DVCBUCKETING_WASM_PAGES
-#define DVCBUCKETING_WASM_PAGES 0x10000
+#define DVCBUCKETING_WASM_PAGES 10000
 #endif
 
 #define DVCBUCKETING_ASC_NEW "__new"
@@ -27,17 +27,17 @@
 #define DVCBUCKETING_EVENTQUEUESIZE "eventQueueSize"
 
 // WASM Exported Functions
-static wasmtime_extern_t *w_init_event_queue;
-static wasmtime_extern_t *w_flush_event_queue;
-static wasmtime_extern_t *w_on_payload_success;
-static wasmtime_extern_t *w_on_payload_failure;
-static wasmtime_extern_t *w_generate_bucketed_config;
-static wasmtime_extern_t *w_event_queue_size;
-static wasmtime_extern_t *w_queue_event;
-static wasmtime_extern_t *w_queue_aggregate_event;
-static wasmtime_extern_t *w_store_config;
-static wasmtime_extern_t *w_set_platform_data;
-static wasmtime_extern_t *w__new;
+static wasmtime_extern_t w_init_event_queue;
+static wasmtime_extern_t w_flush_event_queue;
+static wasmtime_extern_t w_on_payload_success;
+static wasmtime_extern_t w_on_payload_failure;
+static wasmtime_extern_t w_generate_bucketed_config;
+static wasmtime_extern_t w_event_queue_size;
+static wasmtime_extern_t w_queue_event;
+static wasmtime_extern_t w_queue_aggregate_event;
+static wasmtime_extern_t w_store_config;
+static wasmtime_extern_t w_set_platform_data;
+static wasmtime_extern_t w__new;
 
 
 // Core WASM Components
@@ -46,7 +46,7 @@ static wasmtime_memory_t wasm_memory;
 static wasmtime_store_t *wasm_store;
 static wasm_engine_t *wasm_engine;
 static wasmtime_context_t *wasm_context;
-static wasmtime_instance_t *wasm_instance;
+static wasmtime_instance_t wasm_instance;
 
 // Exposed Functions
 
