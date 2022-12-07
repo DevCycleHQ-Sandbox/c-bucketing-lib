@@ -4,11 +4,9 @@
 
 // Platform specific definition of the timestamp functions
 #if __linux__ || __MACH__ || __FreeBSD__ || __unix__
-
 #include <sys/time.h>
-
-#else
-#include <time.h>
+#elif WIN32
+#include <Windows.h>
 #endif
 
 long long current_epoch() {
