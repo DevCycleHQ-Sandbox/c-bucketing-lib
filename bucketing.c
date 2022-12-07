@@ -3,27 +3,34 @@
 #include "lib/bucketing-lib.release.wasm.h"
 
 // Platform specific definition of the timestamp functions
-#if __linux__ || __MACH__ || __FreeBSD__ ||  __unix__
+#if __linux__ || __MACH__ || __FreeBSD__ || __unix__
+
 #include <sys/time.h>
+
 #else
 #include <time.h>
 #endif
 
 long long current_epoch() {
     // Unix/Linux/OSX based OS - sys/time.h is available.
-#if __linux__ || __MACH__ || __FreeBSD__ ||  __unix__
+#if __linux__ || __MACH__ || __FreeBSD__ || __unix__
     struct timeval te;
     gettimeofday(&te, NULL);
-    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
     return milliseconds;
 #elif
-	SYSTEMTIME	st;
-	SYSTEMTIME	lst;
+    FILETIME ft;
+    LARGE_INTEGER li;
 
-	GetSystemTime(&st);
-	SystemTimeToTzSpecificLocalTime(NULL, &st, &lst);
+    GetSystemTimeAsFileTime(&ft);
+    li.LowPart = ft.dwLowDateTime;
+    li.HighPart = ft.dwHighDateTime;
 
-	return (LONGLONG)time(NULL) * 1000LL + (LONGLONG)lst.wMilliseconds;
+    uint64 ret = li.QuadPart;
+    ret -= 116444736000000000LL; /* Convert from file time to UNIX epoch time. */
+    ret /= 10000; /* From 100 nano seconds (10^-7) to 1 millisecond (10^-3) intervals */
+
+    return ret;
 #endif
 }
 
