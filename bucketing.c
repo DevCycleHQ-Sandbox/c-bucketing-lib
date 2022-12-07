@@ -1,4 +1,5 @@
 #include "bucketing.h"
+#include "bucketing_internal.h"
 // WASM Binary Data Include -- See scripts/get-bucketing-lib.sh
 #include "lib/bucketing-lib.release.wasm.h"
 
@@ -8,6 +9,7 @@
 #elif WIN32
 #include <Windows.h>
 #endif
+
 
 long long current_epoch() {
 #if __linux__ || __MACH__ || __FreeBSD__ || __unix__
