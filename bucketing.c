@@ -241,8 +241,6 @@ void on_payload_failure(const char *envKey, const char *payloadId, bool retryabl
         exit_with_error("failed to call w_on_payload_failure.", error, trap);
     }
 
-    wasm_trap_delete(trap);
-
     if (trap != NULL)
         wasm_trap_delete(trap);
     if (error != NULL)

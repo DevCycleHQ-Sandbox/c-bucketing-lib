@@ -6,6 +6,60 @@
 #include "testing.h"
 #include "../bucketing.h"
 #include <sys/time.h>
+#include <regex.h>
+#include <ctype.h>
+
+char *ltrim(char *s)
+{
+    while(isspace(*s)) s++;
+    return s;
+}
+
+char *rtrim(char *s)
+{
+    char* back = s + strlen(s);
+    while(isspace(*--back));
+    *(back+1) = '\0';
+    return s;
+}
+
+char *trim(char *s)
+{
+    return rtrim(ltrim(s));
+}
+
+char *getPayloadId(char *flushed_queue) {
+
+    char *payloadId;
+    regex_t payloadIdRegex;
+    regmatch_t rm[1];
+    int reti;
+    reti = regcomp(&payloadIdRegex, "[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-(:?8|9|[aA]|[bB])[a-f0-9]{3}-[a-f0-9]{12}", REG_EXTENDED);
+    if (reti) {
+        fprintf(stderr, "Could not compile payloadIdRegex\n");
+        exit(1);
+    }
+
+    /* Execute regular expression */
+    reti = regexec(&payloadIdRegex, flushed_queue, 1, rm, 0);
+    if (!reti) {
+        puts("Match");
+        payloadId = malloc((int)(rm[0].rm_eo - rm[0].rm_so));
+        for (int i = 0; i < (int)(rm[0].rm_eo - rm[0].rm_so); i++)
+        {
+            payloadId[i] = flushed_queue[rm[0].rm_so+i];
+        }
+        printf("Payload Id: '%s'\n", payloadId);
+    } else if (reti == REG_NOMATCH) {
+        puts("No match");
+        exit(1);
+    } else {
+        fprintf(stderr, "Regex match failed\n");
+        exit(1);
+    }
+    regfree(&payloadIdRegex);
+    return payloadId;
+}
 
 int main() {
 
@@ -19,7 +73,7 @@ int main() {
     initialize();
 
 
-    init_event_queue(, "{}");
+    init_event_queue(sdkKey, "{}");
     store_config(sdkKey, configString);
     set_platform_data(platformData);
     unsigned char *bucketedConfig = generate_bucketed_config(sdkKey, "{\"user_id\":\"j_test\"}");
@@ -29,7 +83,8 @@ int main() {
     gettimeofday(&start, NULL);
     bucketedConfig = generate_bucketed_config(sdkKey, "{\"user_id\":\"j_test\"}");
     gettimeofday(&stop, NULL);
-    printf("took %lu microseconds to generate a bucketed config\n", (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
+    printf("took %lu microseconds to generate a bucketed config\n",
+           (stop.tv_sec - start.tv_sec) * 1000000 + stop.tv_usec - start.tv_usec);
 
     queue_event(sdkKey, "{\"user_id\":\"j_test\"}", "{\"type\":\"testing\"}");
     queue_event(sdkKey, "{\"user_id\":\"j_test\"}", "{\"type\":\"testing2\"}");
@@ -38,7 +93,15 @@ int main() {
     unsigned char *flushed_queue = flush_event_queue(sdkKey);
     printf("%s\n", flushed_queue);
 
-    // Normally this is where we'd test the payload - but I don't want to mess with string parsing/json right now.
+    char *payloadId = getPayloadId(flushed_queue);
+
+    on_payload_failure(sdkKey, payloadId, true);
+    assert(strcmp(flushed_queue, flush_event_queue(sdkKey)) == 0);
+
+    on_payload_success(sdkKey, payloadId);
+    flushed_queue = flush_event_queue(sdkKey);
+    assert(strcmp("[]", flushed_queue) == 0);
+    printf("%s\n", flushed_queue);
 
     return 0;
 }
