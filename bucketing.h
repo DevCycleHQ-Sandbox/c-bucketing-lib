@@ -170,30 +170,30 @@ static int new_asc_string(const char *data, unsigned long len);
  */
 static unsigned char *read_asc_string(int addr);
 
-static wasm_trap_t *env_abort_callback(__attribute__((unused)) void *env,
-                                       __attribute__((unused)) __attribute__((unused)) wasmtime_caller_t *caller,
+static wasm_trap_t *env_abort_callback(void *env,
+                                       wasmtime_caller_t *caller,
                                        const wasmtime_val_t *args,
-                                       __attribute__((unused)) size_t nargs,
+                                       size_t nargs,
                                        wasmtime_val_t *results,
                                        size_t nresults);
 
-static wasm_trap_t *env_console_log_callback(__attribute__((unused)) void *env,
-                                             __attribute__((unused)) wasmtime_caller_t *caller,
+static wasm_trap_t *env_console_log_callback(void *env,
+                                             wasmtime_caller_t *caller,
                                              const wasmtime_val_t *args,
                                              size_t nargs,
-                                             __attribute__((unused)) wasmtime_val_t *results,
-                                             __attribute__((unused)) size_t nresults);
+                                             wasmtime_val_t *results,
+                                             size_t nresults);
 
-static wasm_trap_t *env_date_now_callback(__attribute__((unused)) void *env,
-                                          __attribute__((unused)) __attribute__((unused)) wasmtime_caller_t *caller,
-                                          __attribute__((unused)) const wasmtime_val_t *args,
-                                          __attribute__((unused)) size_t nargs,
+static wasm_trap_t *env_date_now_callback(void *env,
+                                          wasmtime_caller_t *caller,
+                                          const wasmtime_val_t *args,
+                                          size_t nargs,
                                           wasmtime_val_t *results,
                                           size_t nresults);
 
-static wasm_trap_t *env_seed_callback(__attribute__((unused)) void *env,
-                                      __attribute__((unused)) __attribute__((unused)) wasmtime_caller_t *caller,
-                                      __attribute__((unused)) const wasmtime_val_t *args,
+static wasm_trap_t *env_seed_callback(void *env,
+                                      wasmtime_caller_t *caller,
+                                      const wasmtime_val_t *args,
                                       size_t nargs,
                                       wasmtime_val_t *results,
                                       size_t nresults);

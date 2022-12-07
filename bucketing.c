@@ -331,7 +331,7 @@ void queue_event(const char *envKey, const char *user, const char *eventString) 
     wasmtime_val_delete(&eventStringParam);
 }
 
-void queue_aggregate_event(const  char *envKey, const char *user, const char *eventString) {
+void queue_aggregate_event(const char *envKey, const char *user, const char *eventString) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t userParam = new_asc_string_param(user);
 
