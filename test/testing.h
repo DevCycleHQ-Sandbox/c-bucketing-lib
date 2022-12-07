@@ -30,7 +30,7 @@ char *trim(char *s)
     return rtrim(ltrim(s));
 }
 
-char *getPayloadId(char *flushed_queue) {
+char *getPayloadId(unsigned char *flushed_queue) {
 
     char *payloadId;
     regex_t payloadIdRegex;

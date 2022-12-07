@@ -1,7 +1,32 @@
 #include "bucketing.h"
-
 // WASM Binary Data Include -- See scripts/get-bucketing-lib.sh
 #include "lib/bucketing-lib.release.wasm.h"
+
+// Platform specific definition of the timestamp functions
+#if __linux__ || __MACH__ || __FreeBSD__ ||  __unix__
+#include <sys/time.h>
+#else
+#include <time.h>
+#endif
+
+long long current_epoch() {
+    // Unix/Linux/OSX based OS - sys/time.h is available.
+#if __linux__ || __MACH__ || __FreeBSD__ ||  __unix__
+    struct timeval te;
+    gettimeofday(&te, NULL);
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000;
+    return milliseconds;
+#elif
+	SYSTEMTIME	st;
+	SYSTEMTIME	lst;
+
+	GetSystemTime(&st);
+	SystemTimeToTzSpecificLocalTime(NULL, &st, &lst);
+
+	return (LONGLONG)time(NULL) * 1000LL + (LONGLONG)lst.wMilliseconds;
+#endif
+}
+
 
 bool initialize() {
     // We're storing the wasm compiled file in a constant via XXD.
@@ -521,8 +546,7 @@ env_date_now_callback(void *env,
 
     wasmtime_val_t now;
     now.kind = WASMTIME_F64;
-    // FIXME This returns seconds - we need millis. There's no standard implementation so this will have to be implementation specific
-    now.of.f64 = time(NULL) * 1000;
+    now.of.f64 = current_epoch();
     results[0] = now;
     return NULL;
 }
@@ -539,8 +563,7 @@ static wasm_trap_t *env_seed_callback(void *env,
 
     wasmtime_val_t seed;
     seed.kind = WASMTIME_F64;
-    // FIXME This returns seconds - we need millis. There's no standard implementation so this will have to be implementation specific
-    seed.of.f64 = (float) (rand() * time(NULL) * 1000);
+    seed.of.f64 = (float) (rand() * current_epoch());
     results[0] = seed;
 
     return NULL;
