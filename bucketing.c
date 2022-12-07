@@ -10,7 +10,6 @@
 #endif
 
 long long current_epoch() {
-    // Unix/Linux/OSX based OS - sys/time.h is available.
 #if __linux__ || __MACH__ || __FreeBSD__ || __unix__
     struct timeval te;
     gettimeofday(&te, NULL);
