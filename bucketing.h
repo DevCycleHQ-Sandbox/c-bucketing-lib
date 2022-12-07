@@ -67,7 +67,7 @@ void cleanup();
  * @param envKey environment sdk key
  * @param options event queue options. JSON
  */
-void init_event_queue(char *envKey, char *options);
+void init_event_queue(const char *envKey, const char *options);
 
 /**
  * flush_event_queue returns the request body for a given environment key's event queue to be submitted to
@@ -75,7 +75,7 @@ void init_event_queue(char *envKey, char *options);
  * @param envKey environment sdk key
  * @return
  */
-unsigned char *flush_event_queue(char *envKey);
+unsigned char *flush_event_queue(const char *envKey);
 
 /**
  * on_payload_sucess is the callback to tell WASM that the given payload can be removed from the event queue and was
@@ -83,7 +83,7 @@ unsigned char *flush_event_queue(char *envKey);
  * @param envKey environment sdk key
  * @param payloadId payload GUID
  */
-void on_payload_success(char *envKey, char *payloadId);
+void on_payload_success(const char *envKey, const char *payloadId);
 
 /**
  * on_payload_failure is the callback to tell WASM that the given payload failed, and needs to be re-queued into the
@@ -92,7 +92,7 @@ void on_payload_success(char *envKey, char *payloadId);
  * @param payloadId payload GUID
  * @param retryable whether the error was retryable or not
  */
-void on_payload_failure(char *envKey, char *payloadId, bool retryable);
+void on_payload_failure(const char *envKey, const char *payloadId, bool retryable);
 
 /**
  * generate_bucketed_config returns a bucketed user configuration for a given user.
@@ -100,14 +100,14 @@ void on_payload_failure(char *envKey, char *payloadId, bool retryable);
  * @param user user to bucket
  * @return bucketed user config string
  */
-unsigned char *generate_bucketed_config(char *envKey, char *user);
+unsigned char *generate_bucketed_config(const char *envKey, const char *user);
 
 /**
  * event_queue_size returns the current size of a given SDK key's event queue.
  * @param envKey environment sdk key
  * @return size of event queue
  */
-int event_queue_size(char *envKey);
+int event_queue_size(const char *envKey);
 
 /**
  * queue_event queue's a single event to the WASM event queue
@@ -115,7 +115,7 @@ int event_queue_size(char *envKey);
  * @param user bucketed user config associated with the event
  * @param eventString event data
  */
-void queue_event(char *envKey, char *user, char *eventString);
+void queue_event(const char *envKey, const char *user, const char *eventString);
 
 /**
  * queue_aggregate_event queue's an aggregated event to the WASM event queue
@@ -123,20 +123,20 @@ void queue_event(char *envKey, char *user, char *eventString);
  * @param user bucketed user config associated with the event
  * @param eventString event data
  */
-void queue_aggregate_event(char *envKey, char *user, char *eventString);
+void queue_aggregate_event(const char *envKey, const char *user, const char *eventString);
 
 /**
  * store_config updates the stored DevCycle environment project configuration in WASM used for bucketing rule evaluation
  * @param envKey environment sdk key
  * @param config environment project configuration
  */
-void store_config(char *envKey, char *config);
+void store_config(const char *envKey, const char *config);
 
 /**
  * set_platform_data sets the platformdata in WASM used for bucketing evaluation rules
  * @param platformData platformdata
  */
-void set_platform_data(char *platformData);
+void set_platform_data(const char *platformData);
 
 // Internal functions
 
@@ -146,7 +146,7 @@ void set_platform_data(char *platformData);
  * @param string
  * @return
  */
-static wasmtime_val_t new_asc_string_param(char *string);
+static wasmtime_val_t new_asc_string_param(const char *string);
 
 /**
  * asc_malloc allocates memory inside of the webassembly memory using the assemblyscript w__new function.

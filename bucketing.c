@@ -153,7 +153,7 @@ void cleanup() {
         wasm_engine_delete(wasm_engine);
 }
 
-void init_event_queue(char *envKey, char *options) {
+void init_event_queue(const char *envKey, const char *options) {
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
     wasmtime_val_t results[1];
@@ -175,7 +175,7 @@ void init_event_queue(char *envKey, char *options) {
         wasmtime_error_delete(error);
 }
 
-unsigned char *flush_event_queue(char *envKey) {
+unsigned char *flush_event_queue(const char *envKey) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
 
     wasm_trap_t *trap = NULL;
@@ -198,7 +198,7 @@ unsigned char *flush_event_queue(char *envKey) {
     return read_asc_string(results[0].of.i32);
 }
 
-void on_payload_success(char *envKey, char *payloadId) {
+void on_payload_success(const char *envKey, const char *payloadId) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
 
     wasm_trap_t *trap = NULL;
@@ -223,7 +223,7 @@ void on_payload_success(char *envKey, char *payloadId) {
 
 }
 
-void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
+void on_payload_failure(const char *envKey, const char *payloadId, bool retryable) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
     wasm_trap_t *trap = NULL;
@@ -252,7 +252,7 @@ void on_payload_failure(char *envKey, char *payloadId, bool retryable) {
 
 }
 
-unsigned char *generate_bucketed_config(char *envKey, char *user) {
+unsigned char *generate_bucketed_config(const char *envKey, const char *user) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t userParam = new_asc_string_param(user);
 
@@ -281,7 +281,7 @@ unsigned char *generate_bucketed_config(char *envKey, char *user) {
     return read_asc_string(results[0].of.i32);
 }
 
-int event_queue_size(char *envKey) {
+int event_queue_size(const char *envKey) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
@@ -305,7 +305,7 @@ int event_queue_size(char *envKey) {
     return results[0].of.i32;
 }
 
-void queue_event(char *envKey, char *user, char *eventString) {
+void queue_event(const char *envKey, const char *user, const char *eventString) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t userParam = new_asc_string_param(user);
 
@@ -333,7 +333,7 @@ void queue_event(char *envKey, char *user, char *eventString) {
     wasmtime_val_delete(&eventStringParam);
 }
 
-void queue_aggregate_event(char *envKey, char *user, char *eventString) {
+void queue_aggregate_event(const  char *envKey, const char *user, const char *eventString) {
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t userParam = new_asc_string_param(user);
 
@@ -360,7 +360,7 @@ void queue_aggregate_event(char *envKey, char *user, char *eventString) {
 
 }
 
-void store_config(char *envKey, char *config) {
+void store_config(const char *envKey, const char *config) {
 
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
@@ -385,7 +385,7 @@ void store_config(char *envKey, char *config) {
 
 }
 
-void set_platform_data(char *platformData) {
+void set_platform_data(const char *platformData) {
     wasmtime_val_t platformDataParam = new_asc_string_param(platformData);
 
     wasm_trap_t *trap = NULL;
@@ -484,7 +484,7 @@ env_abort_callback(__attribute__((unused)) __attribute__((unused)) void *env,
                    size_t nresults) {
 
     if (nargs != 4) {
-        char *message = "failed to match proper args length.";
+        const char *message = "failed to match proper args length.";
         return wasmtime_trap_new(message, strlen(message));
     }
     // message address pointer
@@ -517,7 +517,7 @@ env_date_now_callback(__attribute__((unused)) __attribute__((unused)) void *env,
                       size_t nresults) {
 
     if (nresults != 1) {
-        char *message = "failed to match proper return results length.";
+        const char *message = "failed to match proper return results length.";
         return wasmtime_trap_new(message, strlen(message));
     }
 
@@ -536,7 +536,7 @@ env_seed_callback(__attribute__((unused)) __attribute__((unused)) void *env,
                   wasmtime_val_t *results,
                   size_t nresults) {
     if (nresults != 1) {
-        char *message = "failed to match proper return results length.";
+        const char *message = "failed to match proper return results length.";
         return wasmtime_trap_new(message, strlen(message));
     }
 
@@ -549,7 +549,7 @@ env_seed_callback(__attribute__((unused)) __attribute__((unused)) void *env,
     return NULL;
 }
 
-static wasmtime_val_t new_asc_string_param(char *envKey) {
+static wasmtime_val_t new_asc_string_param(const char *envKey) {
     wasmtime_val_t param = {.kind = WASMTIME_I32, .of.i32 = new_asc_string(envKey, strlen(envKey))};
     return param;
 }
