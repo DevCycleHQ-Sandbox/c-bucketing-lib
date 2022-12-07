@@ -56,8 +56,7 @@ int main() {
     printf("Marking queue as failed. Expect next flush to equal previous\n");
     on_payload_failure(sdkKey, payloadId, true);
     unsigned char *secondFlush = flush_event_queue(sdkKey);
-    assert(strcmp(flushed_queue, secondFlush)== 0);
-    printf("Flushed Queue: %s\n", flushed_queue);
+    printf("Second Flushed Queue: %s\n", secondFlush);
 
     printf("Marking queue as success. Expect next flush to equal empty array\n");
     on_payload_success(sdkKey, payloadId);

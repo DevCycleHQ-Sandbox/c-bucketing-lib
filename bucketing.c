@@ -228,13 +228,12 @@ void on_payload_success(const char *envKey, const char *payloadId) {
 
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[2];
 
     wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
     params[0] = envKeyParam;
     params[1] = payloadIdParam;
-    error = wasmtime_func_call(wasm_context, &w_on_payload_success.of.func, params, 2, results,
+    error = wasmtime_func_call(wasm_context, &w_on_payload_success.of.func, params, 2, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_on_payload_success.", error, trap);
@@ -253,14 +252,13 @@ void on_payload_failure(const char *envKey, const char *payloadId, bool retryabl
     wasmtime_val_t payloadIdParam = new_asc_string_param(payloadId);
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[3];
 
     params[0] = envKeyParam;
     params[1] = payloadIdParam;
     params[2].kind = WASMTIME_I32;
     params[2].of.i32 = retryable ? 1 : 0;
-    error = wasmtime_func_call(wasm_context, &w_on_payload_failure.of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &w_on_payload_failure.of.func, params, 3, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_on_payload_failure.", error, trap);
@@ -335,13 +333,12 @@ void queue_event(const char *envKey, const char *user, const char *eventString) 
     wasmtime_val_t eventStringParam = new_asc_string_param(eventString);
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[3];
 
     params[0] = envKeyParam;
     params[1] = userParam;
     params[2] = eventStringParam;
-    error = wasmtime_func_call(wasm_context, &w_queue_event.of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &w_queue_event.of.func, params, 3, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_queue_event.", error, trap);
@@ -363,13 +360,12 @@ void queue_aggregate_event(const char *envKey, const char *user, const char *eve
     wasmtime_val_t eventStringParam = new_asc_string_param(eventString);
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[3];
 
     params[0] = envKeyParam;
     params[1] = userParam;
     params[2] = eventStringParam;
-    error = wasmtime_func_call(wasm_context, &w_queue_aggregate_event.of.func, params, 3, results,
+    error = wasmtime_func_call(wasm_context, &w_queue_aggregate_event.of.func, params, 3, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_queue_aggregate_event.", error, trap);
@@ -387,13 +383,12 @@ void store_config(const char *envKey, const char *config) {
 
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[2];
     wasmtime_val_t envKeyParam = new_asc_string_param(envKey);
     wasmtime_val_t configParam = new_asc_string_param(config);
     params[0] = envKeyParam;
     params[1] = configParam;
-    error = wasmtime_func_call(wasm_context, &(w_store_config.of.func), params, 2, results,
+    error = wasmtime_func_call(wasm_context, &(w_store_config.of.func), params, 2, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_store_config.", error, trap);
@@ -413,10 +408,9 @@ void set_platform_data(const char *platformData) {
 
     wasm_trap_t *trap = NULL;
     wasmtime_error_t *error = NULL;
-    wasmtime_val_t results[0];
     wasmtime_val_t params[1];
     params[0] = platformDataParam;
-    error = wasmtime_func_call(wasm_context, &w_set_platform_data.of.func, params, 1, results,
+    error = wasmtime_func_call(wasm_context, &w_set_platform_data.of.func, params, 1, NULL,
                                0, &trap);
     if (error != NULL) {
         exit_with_error("failed to call w_set_platform_data.", error, trap);
