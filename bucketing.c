@@ -475,9 +475,9 @@ static void exit_with_error(const char *message, wasmtime_error_t *error, wasm_t
 }
 
 static wasm_trap_t *
-env_abort_callback(__attribute__((unused)) __attribute__((unused)) void *env,
-                   __attribute__((unused)) wasmtime_caller_t *caller, const wasmtime_val_t *args,
-                   __attribute__((unused)) size_t nargs,
+env_abort_callback(void *env,
+                   wasmtime_caller_t *caller, const wasmtime_val_t *args,
+                   size_t nargs,
                    wasmtime_val_t *results,
                    size_t nresults) {
 
@@ -498,9 +498,9 @@ env_abort_callback(__attribute__((unused)) __attribute__((unused)) void *env,
 }
 
 static wasm_trap_t *
-env_console_log_callback(__attribute__((unused)) void *env, __attribute__((unused)) wasmtime_caller_t *caller,
+env_console_log_callback(void *env, wasmtime_caller_t *caller,
                          const wasmtime_val_t *args, size_t nargs,
-                         __attribute__((unused)) wasmtime_val_t *results, __attribute__((unused)) size_t nresults) {
+                         wasmtime_val_t *results, size_t nresults) {
     if (nargs >= 1) {
         printf("%s\n", read_asc_string(args[0].of.i32));
     }
@@ -508,9 +508,9 @@ env_console_log_callback(__attribute__((unused)) void *env, __attribute__((unuse
 }
 
 static wasm_trap_t *
-env_date_now_callback(__attribute__((unused)) __attribute__((unused)) void *env,
-                      __attribute__((unused)) wasmtime_caller_t *caller,
-                      __attribute__((unused)) const wasmtime_val_t *args, __attribute__((unused)) size_t nargs,
+env_date_now_callback(void *env,
+                      wasmtime_caller_t *caller,
+                      const wasmtime_val_t *args, size_t nargs,
                       wasmtime_val_t *results,
                       size_t nresults) {
 
@@ -527,12 +527,11 @@ env_date_now_callback(__attribute__((unused)) __attribute__((unused)) void *env,
     return NULL;
 }
 
-static wasm_trap_t *
-env_seed_callback(__attribute__((unused)) __attribute__((unused)) void *env,
-                  __attribute__((unused)) wasmtime_caller_t *caller,
-                  __attribute__((unused)) const wasmtime_val_t *args, size_t nargs,
-                  wasmtime_val_t *results,
-                  size_t nresults) {
+static wasm_trap_t *env_seed_callback(void *env,
+                                      wasmtime_caller_t *caller,
+                                      const wasmtime_val_t *args, size_t nargs,
+                                      wasmtime_val_t *results,
+                                      size_t nresults) {
     if (nresults != 1) {
         const char *message = "failed to match proper return results length.";
         return wasmtime_trap_new(message, strlen(message));
