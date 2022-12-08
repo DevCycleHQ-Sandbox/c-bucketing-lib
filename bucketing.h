@@ -4,8 +4,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <wasm.h>
-#include <wasmtime.h>
 #include <stdbool.h>
 #include <time.h>
 #include <string.h>

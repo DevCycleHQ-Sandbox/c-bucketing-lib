@@ -18,6 +18,7 @@ long long current_epoch() {
     long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;
     return milliseconds;
 #elif
+    // This doesn't actually work; and causes a compiletime error. Need to run this on a windows computer and find the actual calls needed.
     FILETIME ft;
     LARGE_INTEGER li;
 
@@ -50,7 +51,6 @@ bool initialize() {
     wasm_context = wasmtime_store_context(wasm_store);
     error = wasmtime_module_new(wasm_engine, (uint8_t *) wasm_file.data, wasm_file.size,
                                 &wasm_module);
-    //wasm_byte_vec_delete(&wasm_file);
     if (error != NULL) {
         exit_with_error("Could not instantiate WASM module.", error, NULL);
     }
@@ -108,7 +108,6 @@ bool initialize() {
     wasm_memory = memory.of.memory;
     uint64_t _memory_size = wasmtime_memory_size(wasm_context, &wasm_memory);
     if (_memory_size != DVCBUCKETING_WASM_PAGES) {
-
         exit_with_error("WASM Memory was not allocated to the expected size in pages.", NULL, NULL);
     }
 

@@ -1,7 +1,8 @@
 #ifndef DVCBUCKETING_BUCKETING_INTERNAL_H
 #define DVCBUCKETING_BUCKETING_INTERNAL_H
-#include <wasmtime.h>
 
+#include <wasmtime.h>
+#include <wasm.h>
 
 #define DVCBUCKETING_ASC_NEW "__new"
 #define DVCBUCKETING_SETPLATFORMDATA "setPlatformData"
