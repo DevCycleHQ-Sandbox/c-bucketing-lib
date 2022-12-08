@@ -31,5 +31,7 @@ jobs:
     - name: Upload Built Library Output
       uses: actions/upload-artifact@v3
       with:
-        name: libdvcbucketing.a
-        path: build/libdvcbucketing.a
+        name: libdvcbucketing-${{ matrix.os }}
+        path: |
+          build/libdvcbucketing.a
+          bucketing.h
