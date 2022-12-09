@@ -17,7 +17,7 @@ jobs:
       - id: build-test
         uses: ./.github/workflows/cmake-composite
       - name: Zip Artifacts
-        if: startsWith(github.ref, 'refs/tags/')4
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           zip -r libdvcbucketing-${{env.GITHUB_SHA}}-${{ matrix.os }}.zip ${{github.workspace}}/build/libdvcbucketing.a bucketing.h
       - name: Release
