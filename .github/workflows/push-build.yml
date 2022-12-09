@@ -14,4 +14,4 @@ jobs:
         with:
           submodules: recursive
       - id: build-test
-        uses: ./.github/workflows/cmake-composite@main
+        uses: ./.github/workflows/cmake-composite
