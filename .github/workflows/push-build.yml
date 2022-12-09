@@ -19,7 +19,7 @@ jobs:
       - name: Zip Artifacts
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          zip -r libdvcbucketing-${{env.GITHUB_SHA}}-${{ matrix.os }}.zip ${{github.workspace}}/build/libdvcbucketing.a bucketing.h
+          zip libdvcbucketing-${{env.GITHUB_SHA}}-${{ matrix.os }}.zip build/libdvcbucketing.a bucketing.h
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
