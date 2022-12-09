@@ -1,10 +1,11 @@
 name: Build and Test
-on:
-  push:
+on: push
 env:
   BUILD_TYPE: Release
 jobs:
   build:
+    permissions:
+      contents: write
     strategy:
       matrix:
         os: [ ubuntu-latest, macos-12 ]
@@ -15,3 +16,10 @@ jobs:
           submodules: recursive
       - id: build-test
         uses: ./.github/workflows/cmake-composite
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            build/libdvcbucketing.a
+            bucketing.h
