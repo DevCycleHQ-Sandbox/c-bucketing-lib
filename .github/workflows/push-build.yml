@@ -1,0 +1,29 @@
+name: Build and Test
+on: push
+env:
+  BUILD_TYPE: Release
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, macos-12 ]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - id: build-test
+        uses: ./.github/workflows/cmake-composite
+      - name: Zip Artifacts
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          zip libdvcbucketing-${{env.GITHUB_SHA}}-${{ matrix.os }}.zip build/libdvcbucketing.a bucketing.h
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            libdvcbucketing-${{env.GITHUB_SHA}}-${{ matrix.os }}.zip
+            
