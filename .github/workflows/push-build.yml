@@ -10,4 +10,5 @@ jobs:
         os: [ ubuntu-latest, macos-12 ]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: ./.github/workflows/cmake-composite@main
+       - id: Build and Test
+         uses: ./.github/workflows/cmake-composite@main
