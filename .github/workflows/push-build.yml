@@ -10,5 +10,8 @@ jobs:
         os: [ ubuntu-latest, macos-12 ]
     runs-on: ${{ matrix.os }}
     steps:
-       - id: build-test
-         uses: ./.github/workflows/cmake-composite@main
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+      - id: build-test
+        uses: ./.github/workflows/cmake-composite@main
